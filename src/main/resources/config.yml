@@ -1,0 +1,103 @@
+prefix: "&7[&bNovaAuth&7]&r "
+
+database:
+  file: "data.db"
+
+password:
+  min-length: 6
+  bcrypt-cost: 12
+
+session:
+  enabled: true
+  duration-seconds: 1800
+  ip-check: true
+
+security:
+  max-login-attempts: 5
+  lockout-seconds: 300
+  kick-on-max-attempts: true
+
+authentication:
+  kick-timeout-seconds: 60
+
+# Limbo/auth world: unauthenticated players are teleported here.
+limbo:
+  enabled: true
+  world: "auth"
+  spawn:
+    use-world-spawn: true
+    x: 0.5
+    y: 100.0
+    z: 0.5
+    yaw: 0.0
+    pitch: 0.0
+
+restrictions:
+  block-movement: true
+
+  # If limbo.enabled=true and world exists, limbo is used.
+  # Otherwise this can still teleport to the current world's spawn.
+  teleport-to-spawn-on-join: true
+
+  # Return to the exact join location after login/register.
+  return-to-location-after-login: true
+
+  # Hide unauthenticated players from others (and others from them).
+  hide-unauthenticated: false
+
+  # Allowed commands BEFORE authentication (no leading slash, case-insensitive).
+  allow-commands:
+    - "login"
+    - "l"
+    - "register"
+    - "reg"
+    - "novaauthreload"
+
+effects:
+  enabled: true
+
+  # Strong "freeze-like" behavior:
+  # - movement is blocked by event cancel (restrictions.block-movement)
+  # - plus freeze ticks + slowness + jump disable
+  freeze-ticks: 140
+  slowness: true
+  jump-disable: true
+  blindness: true
+
+  # Reapply effects every N ticks (20 ticks = 1 second)
+  reapply-interval-ticks: 20
+
+reminder:
+  enabled: true
+  interval-seconds: 5
+
+  # If true: actionbar prompt; if false: chat message prompt.
+  actionbar: false
+
+messages:
+  must_register: "&cYou are not registered. Use &e/register <password> <password>&c."
+  must_login: "&cPlease login with &e/login <password>&c."
+  already_authenticated: "&aYou are already authenticated."
+  already_registered: "&cYou are already registered. Use &e/login <password>&c."
+  register_usage: "&cUsage: /register <password> <passwordConfirm>"
+  login_usage: "&cUsage: /login <password>"
+  changepassword_usage: "&cUsage: /changepassword <old> <new> <newConfirm>"
+  password_too_short: "&cPassword too short (min: {min})."
+  passwords_do_not_match: "&cPasswords do not match."
+  registered_success: "&aRegistered successfully."
+  login_success: "&aLogged in successfully."
+  logout_success: "&aLogged out."
+  login_failed: "&cInvalid password."
+  not_registered: "&cYou are not registered."
+  not_authenticated: "&cYou must login first."
+  changepassword_success: "&aPassword changed successfully."
+  old_password_incorrect: "&cOld password is incorrect."
+  locked_out: "&cToo many attempts. Try again in {seconds}s."
+  kicked_timeout: "&cYou took too long to login."
+  action_blocked: "&cYou must login/register to do that."
+  command_blocked: "&cYou must login/register to use commands."
+  reload_success: "&aNovaAuth reloaded."
+  unregister_usage: "&cUsage: /unregister <player>"
+  unregister_success: "&aUnregistered {player}."
+  unregister_not_found: "&cPlayer not found/registered: {player}"
+  session_auto_login: "&aSession restored. You have been logged in."
