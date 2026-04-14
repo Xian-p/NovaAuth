@@ -5,6 +5,7 @@ import com.novaauth.config.Messages;
 import com.novaauth.config.NovaAuthConfig;
 import com.novaauth.storage.UserRecord;
 import com.novaauth.storage.UserRepository;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -87,10 +88,7 @@ public final class AuthService {
         status.put(uuid, AuthStatus.UNKNOWN);
         preAuthLocation.put(uuid, player.getLocation().clone());
 
-        // Apply visibility rules immediately (treat as unauth until proven otherwise)
-        applyVisibilityRules(player);
-
-        // Teleport to limbo/spawn immediately (main thread)
+        // Teleport to limbo/spawn immediately
         teleportUnauthenticated(player);
 
         // DB lookup async; then decide register/login prompt or session auto-login
@@ -211,13 +209,11 @@ public final class AuthService {
         UUID uuid = player.getUniqueId();
         authenticated.remove(uuid);
 
-        // treat them as registered if they were registered
         if (status.getOrDefault(uuid, AuthStatus.UNKNOWN) == AuthStatus.UNKNOWN) {
             status.put(uuid, AuthStatus.REGISTERED);
         }
 
         teleportUnauthenticated(player);
-        applyVisibilityRules(player);
         scheduleTimeoutKick(player);
     }
 
@@ -261,8 +257,6 @@ public final class AuthService {
                 player.teleport(loc);
             }
         }
-
-        applyVisibilityRules(player);
     }
 
     private void scheduleTimeoutKick(Player player) {
@@ -300,7 +294,6 @@ public final class AuthService {
     }
 
     private void teleportUnauthenticated(Player player) {
-        // Save current location (already saved on join; but on logout it might be useful to save again)
         preAuthLocation.putIfAbsent(player.getUniqueId(), player.getLocation().clone());
 
         Location target = null;
@@ -311,7 +304,11 @@ public final class AuthService {
                 if (config.limboUseWorldSpawn()) {
                     target = w.getSpawnLocation();
                 } else {
-                    target = new Location(w, config.limboX(), config.limboY(), config.limboZ(), config.limboYaw(), config.limboPitch());
+                    target = new Location(
+                            w,
+                            config.limboX(), config.limboY(), config.limboZ(),
+                            config.limboYaw(), config.limboPitch()
+                    );
                 }
             } else {
                 Bukkit.getLogger().warning("[NovaAuth] Limbo enabled but world not found: " + config.limboWorld());
@@ -340,7 +337,7 @@ public final class AuthService {
     }
 
     /* ---------------------------
-       Effects + Reminders + Visibility
+       Effects + Reminders
        --------------------------- */
 
     private void restartBackgroundTasks() {
@@ -391,13 +388,8 @@ public final class AuthService {
             }
 
             if (config.reminderActionbar()) {
-                // Paper provides Adventure API action bar; but many servers still accept String legacy via Paper bridge.
-                // To avoid hard dependency on Adventure serialization, we send chat if actionbar fails.
-                try {
-                    p.sendActionBar(text);
-                } catch (Throwable ignored) {
-                    p.sendMessage(text);
-                }
+                // text already contains legacy section color codes after ChatColor translation
+                p.sendActionBar(LegacyComponentSerializer.legacySection().deserialize(text));
             } else {
                 p.sendMessage(text);
             }
@@ -407,18 +399,12 @@ public final class AuthService {
     private void applyUnauthEffects(Player p) {
         if (!config.effectsEnabled()) return;
 
-        // Freeze ticks (server side "freezing" mechanic)
         int freeze = config.effectsFreezeTicks();
         if (freeze > 0) {
-            try {
-                p.setFreezeTicks(freeze);
-            } catch (Throwable ignored) {
-                // Older/forked APIs might differ; movement blocking still applies.
-            }
+            p.setFreezeTicks(freeze);
         }
 
-        // Apply potion effects with short duration; re-applied by task.
-        int dur = (int) Math.max(40, config.effectsReapplyIntervalTicks() + 40); // 2s+ buffer
+        int dur = (int) Math.max(40, config.effectsReapplyIntervalTicks() + 40);
 
         if (config.effectsBlindness()) {
             p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, dur, 0, true, false, false));
@@ -427,38 +413,14 @@ public final class AuthService {
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, dur, 10, true, false, false));
         }
         if (config.effectsJumpDisable()) {
-            // Negative jump is not supported; use high amplifier to effectively prevent jumping (server behavior varies)
             p.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, dur, 250, true, false, false));
         }
     }
 
     private void clearUnauthEffects(Player p) {
-        try { p.setFreezeTicks(0); } catch (Throwable ignored) {}
-
-        // Remove only effects we likely applied.
+        p.setFreezeTicks(0);
         p.removePotionEffect(PotionEffectType.BLINDNESS);
         p.removePotionEffect(PotionEffectType.SLOWNESS);
         p.removePotionEffect(PotionEffectType.JUMP_BOOST);
-    }
-
-    private void applyVisibilityRules(Player subject) {
-        if (!config.hideUnauthenticated()) return;
-
-        boolean subjectAuth = isAuthenticated(subject);
-
-        for (Player other : Bukkit.getOnlinePlayers()) {
-            if (other.equals(subject)) continue;
-
-            boolean otherAuth = isAuthenticated(other);
-
-            if (subjectAuth && otherAuth) {
-                other.showPlayer(plugin, subject);
-                subject.showPlayer(plugin, other);
-            } else {
-                // If either is unauthenticated, hide both ways (so unauth users can't see others either)
-                other.hidePlayer(plugin, subject);
-                subject.hidePlayer(plugin, other);
-            }
-        }
     }
 }
