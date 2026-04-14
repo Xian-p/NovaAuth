@@ -1,9 +1,18 @@
 package com.novaauth.auth;
 
-import com.novaauth.lib.jbcrypt.BCrypt;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Arrays;
 
+/**
+ * BCrypt password hasher.
+ *
+ * IMPORTANT:
+ * - In Maven, relocation via maven-shade-plugin happens at PACKAGE time, not at COMPILE time.
+ * - Therefore, source code must reference org.mindrot.jbcrypt.BCrypt.
+ * - The shade plugin will relocate the bytecode reference into com.novaauth.lib.jbcrypt.BCrypt
+ *   inside the shaded jar.
+ */
 public final class BcryptPasswordHasher implements PasswordHasher {
 
     private final int cost;
