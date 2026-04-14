@@ -1,0 +1,37 @@
+name: NovaAuth
+main: com.novaauth.NovaAuthPlugin
+version: 1.1.0
+api-version: "1.21"
+author: "NovaAuth"
+description: "AuthMe-style authentication for Purpur/Paper 1.21.x (Limbo + Freeze + Blindness + Reminders)"
+
+commands:
+  register:
+    description: "Register an account"
+    usage: "/register <password> <passwordConfirm>"
+    aliases: [reg]
+  login:
+    description: "Login to your account"
+    usage: "/login <password>"
+    aliases: [l]
+  logout:
+    description: "Logout of your account"
+    usage: "/logout"
+  changepassword:
+    description: "Change your password"
+    usage: "/changepassword <old> <new> <newConfirm>"
+    aliases: [changepw, cpw]
+  unregister:
+    description: "Unregister a player (admin)"
+    usage: "/unregister <player>"
+    permission: novaauth.admin.unregister
+  novaauthreload:
+    description: "Reload NovaAuth configuration"
+    usage: "/novaauthreload"
+    permission: novaauth.admin.reload
+
+permissions:
+  novaauth.admin.unregister:
+    default: op
+  novaauth.admin.reload:
+    default: op
