@@ -1,0 +1,13 @@
+package com.novaauth.auth;
+
+public enum AuthResult {
+    SUCCESS,
+    ALREADY_AUTHENTICATED,
+    NOT_REGISTERED,
+    ALREADY_REGISTERED,
+    INVALID_PASSWORD,
+    PASSWORD_TOO_SHORT,
+    PASSWORD_MISMATCH,
+    LOCKED_OUT,
+    ERROR
+}
