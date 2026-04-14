@@ -43,6 +43,7 @@ public final class ChangePasswordCommand implements CommandExecutor {
             }
 
             switch (res) {
+                case NOT_AUTHENTICATED -> p.sendMessage(auth.messages().msg("not_authenticated", "&cYou must login first."));
                 case PASSWORD_TOO_SHORT -> p.sendMessage(auth.messages().msg("password_too_short", "&cPassword too short (min: {min}).",
                         Map.of("min", String.valueOf(auth.config().passwordMinLength()))));
                 case PASSWORD_MISMATCH -> p.sendMessage(auth.messages().msg("passwords_do_not_match", "&cPasswords do not match."));
